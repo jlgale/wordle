@@ -2,45 +2,50 @@ package main
 
 import (
 	"fmt"
-	"github.com/jlgale/wordle"
-	"github.com/spf13/cobra"
 	"math/rand"
 	"strings"
+
+	"github.com/jlgale/wordle"
+	"github.com/spf13/cobra"
 )
 
 var (
-	wordFilePath string
-	randomSeed   int
-	repeat       int
-	playStrategy string
+	words    []wordle.Word
+	strategy wordle.Strategy
+	rng      *rand.Rand
 )
 
-var (
-	root = &cobra.Command{
+func play(wdl *wordle.Game, strategy wordle.Strategy, word wordle.Word) {
+	for !wdl.Over() {
+		guess := strategy.Guess(wdl)
+		match := guess.Match(word)
+		wdl.AddGuess(guess, match)
+	}
+}
+
+func main() {
+	var playStrategy string
+	var wordFilePath string
+	var randomSeed int
+
+	root := &cobra.Command{
 		Use:   "wordle",
 		Short: "Play wordle games.",
-		Long:  `A utility for playing "wordle" games on the commandline. Useful for exploring playing strategies.`,
-	}
-)
+		Long: (`A utility for playing "wordle" games on the commandline. ` +
+			`Useful for exploring playing strategies.`),
 
-func init() {
-	root.PersistentFlags().StringVar(&wordFilePath, "words", "./words", "Path to accepted word list")
-	root.PersistentFlags().IntVar(&randomSeed, "seed", 42, "Random seed")
-	root.PersistentFlags().StringVarP(&playStrategy, "strategy", "s", "naive", "Play strategy. One of: naive, diversity")
-	interactive := &cobra.Command{
-		Use:   "interactive",
-		Short: "Interactively guess a wordle answer.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			words, err := ReadWordFile(wordFilePath, func(word string, lineno int, err error) error {
+		// Setup common state
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			words, err = ReadWordFile(wordFilePath, func(word string, lineno int, err error) error {
 				// fmt.Fprintf(os.Stderr, "%s:%d: %s: %v\n", *wordFilePath, lineno, word, err)
 				return nil
 			})
 			if err != nil {
 				return err
 			}
-			rng := rand.New(rand.NewSource(int64(randomSeed)))
+			rng = rand.New(rand.NewSource(int64(randomSeed)))
 
-			var strategy wordle.Strategy
 			switch strings.ToLower(playStrategy) {
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng)
@@ -49,6 +54,19 @@ func init() {
 			default:
 				return fmt.Errorf("Unrecognized strategy: %s", playStrategy)
 			}
+			return nil
+		},
+	}
+	root.PersistentFlags().StringVar(&wordFilePath, "words", "./words",
+		"Path to accepted word list")
+	root.PersistentFlags().IntVar(&randomSeed, "seed", 42,
+		"Random seed")
+	root.PersistentFlags().StringVarP(&playStrategy, "strategy", "s", "naive",
+		"Play strategy. One of: naive, diversity")
+	interact := &cobra.Command{
+		Use:   "interact",
+		Short: "Interactively guess a wordle answer.",
+		RunE: func(cmd *cobra.Command, args []string) error {
 			game := wordle.NewGame(words, nil)
 			for !game.Over() {
 				guess := strategy.Guess(&game)
@@ -74,27 +92,11 @@ func init() {
 			return nil
 		},
 	}
+	var repeat int
 	play := &cobra.Command{
 		Use:   "play",
 		Short: "Play automatically.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			words, err := ReadWordFile(wordFilePath, func(word string, lineno int, err error) error {
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-			rng := rand.New(rand.NewSource(int64(randomSeed)))
-
-			var strategy wordle.Strategy
-			switch strings.ToLower(playStrategy) {
-			case "naive":
-				strategy = wordle.NaiveStrategy(rng)
-			case "diversity":
-				strategy = wordle.DiversityStrategy(rng)
-			default:
-				return fmt.Errorf("Unrecognized strategy: %s", playStrategy)
-			}
 			answers := make([]wordle.Word, len(args))
 			for idx, s := range args {
 				answer, err := wordle.ParseWord(s)
@@ -138,18 +140,7 @@ func init() {
 			return nil
 		},
 	}
-	play.PersistentFlags().IntVarP(&repeat, "repeat", "n", 1, "Play multiple games.")
-	root.AddCommand(interactive, play)
-}
-
-func play(wdl *wordle.Game, strategy wordle.Strategy, word wordle.Word) {
-	for !wdl.Over() {
-		guess := strategy.Guess(wdl)
-		match := guess.Match(word)
-		wdl.AddGuess(guess, match)
-	}
-}
-
-func main() {
+	play.Flags().IntVarP(&repeat, "repeat", "n", 1, "Play multiple games.")
+	root.AddCommand(interact, play)
 	root.Execute()
 }
