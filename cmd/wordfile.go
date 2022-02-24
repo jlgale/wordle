@@ -2,19 +2,20 @@ package main
 
 import (
 	"bufio"
-	"github.com/jlgale/wordle"
 	"os"
 	"strings"
+
+	"github.com/jlgale/wordle"
 )
 
-// ReadWordFile loads the contents of the file at the given filename
+// readWordFile loads the contents of the file at the given filename
 // as a list of Wordle words, one per line. The format is similar to
 // a unix "dict" file.
 //
 // Comments (beginning with #) are ignored
 // Non-conforming words are passed to the given onError handler. If that handler
 // returns an error, ReadWordFile stops and returns it.
-func ReadWordFile(filename string, onError func(word string, lineno int, err error) error) ([]wordle.Word, error) {
+func readWordFile(filename string, onError func(word string, lineno int, err error) error) ([]wordle.Word, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
