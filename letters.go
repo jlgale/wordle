@@ -29,6 +29,10 @@ func (a Letters) Add(b Letters) Letters {
 	return a | b
 }
 
+func (a Letters) AddChar(c byte) Letters {
+	return a | letterMask(c)
+}
+
 func (a Letters) Intersect(b Letters) Letters {
 	return a & b
 }

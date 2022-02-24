@@ -55,10 +55,14 @@ func main() {
 			rng = rand.New(rand.NewSource(int64(randomSeed)))
 
 			switch strings.ToLower(playStrategy) {
+			case "common":
+				strategy = wordle.CommonStrategy(rng, &log)
 			case "diversity":
 				strategy = wordle.DiversityStrategy(rng)
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng, &log)
+			case "selective":
+				strategy = wordle.SelectiveStrategy(rng, &log)
 			default:
 				return fmt.Errorf("Unrecognized strategy: %s", playStrategy)
 			}
