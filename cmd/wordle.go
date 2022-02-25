@@ -63,7 +63,7 @@ func main() {
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng, &log)
 			case "selective":
-				strategy = wordle.SelectiveStrategy(rng, &log)
+				strategy = wordle.WeightedStrategy(rng, wordle.SelectiveScale(&log))
 			default:
 				return fmt.Errorf("Unrecognized strategy: %s", playStrategy)
 			}
