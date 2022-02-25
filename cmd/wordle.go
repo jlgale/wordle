@@ -56,7 +56,8 @@ func main() {
 
 			switch strings.ToLower(playStrategy) {
 			case "common":
-				strategy = wordle.CommonStrategy(rng, &log)
+				strategy = wordle.WeightedStrategy(rng,
+					wordle.CommonScale(&log))
 			case "diversity":
 				strategy = wordle.DiversityStrategy(rng)
 			case "naive":
