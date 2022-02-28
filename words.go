@@ -42,3 +42,15 @@ func (w Word) contains(c byte) bool {
 func (w Word) String() string {
 	return string(w[:])
 }
+
+func (guess Word) Match(actual Word) Match {
+	var m Match
+	for i := 0; i < WordLen; i++ {
+		if guess[i] == actual[i] {
+			m[i] = Green
+		} else if actual.contains(guess[i]) {
+			m[i] = Yellow
+		}
+	}
+	return m
+}

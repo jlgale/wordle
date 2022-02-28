@@ -6,18 +6,6 @@ type Guess struct {
 	Match Match
 }
 
-func (guess Word) Match(actual Word) Match {
-	var m Match
-	for i := 0; i < WordLen; i++ {
-		if guess[i] == actual[i] {
-			m[i] = Green
-		} else if actual.contains(guess[i]) {
-			m[i] = Yellow
-		}
-	}
-	return m
-}
-
 func (g Guess) MustInclude() Letters {
 	must := make([]byte, 0, WordLen)
 	for i := 0; i < WordLen; i++ {
