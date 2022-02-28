@@ -16,7 +16,7 @@ func NaiveStrategy(rng *rand.Rand, log *zerolog.Logger) Naive {
 }
 
 func (n Naive) Guess(game *Game) Word {
-	var possible = game.Possible()
+	var possible = game.PossibleAnswers()
 	n.log.Printf("choosing from %d possible words", len(possible))
 	var idx = n.rng.Intn(len(possible))
 	return possible[idx]

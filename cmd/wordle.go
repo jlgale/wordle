@@ -22,7 +22,7 @@ func play(wdl *wordle.Game, strategy wordle.Strategy, word wordle.Word) {
 	for !wdl.Over() {
 		guess := strategy.Guess(wdl)
 		match := guess.Match(word)
-		wdl.AddGuess(guess, match)
+		*wdl = wdl.Guess(guess, match)
 	}
 }
 
@@ -100,7 +100,7 @@ func main() {
 						fmt.Println(err)
 						continue
 					}
-					game.AddGuess(guess, match)
+					game = game.Guess(guess, match)
 					break
 				}
 			}

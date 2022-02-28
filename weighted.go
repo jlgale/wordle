@@ -24,7 +24,7 @@ func WeightedStrategy(rng *rand.Rand, scale Scale) Weighted {
 }
 
 func (x Weighted) Guess(game *Game) Word {
-	var possible = game.Possible()
+	var possible = game.PossibleAnswers()
 	var weights = x.scale.Weights(possible)
 	var offset = make([]float64, len(weights))
 	var total = 0.0

@@ -11,7 +11,7 @@ func DiversityStrategy(rng *rand.Rand) Diversity {
 }
 
 func (n Diversity) Guess(game *Game) Word {
-	var possible = game.Possible()
+	var possible = game.PossibleAnswers()
 	var choices = []Word{possible[0]}
 	var score = choices[0].Letters().Len()
 	for _, w := range possible[1:] {
