@@ -60,6 +60,8 @@ func main() {
 					wordle.CommonScale(&log))
 			case "diversity":
 				strategy = wordle.DiversityStrategy(rng)
+			case "filtering":
+				strategy = wordle.FilteringStrategy(rng, &log)
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng, &log)
 			case "selective":
@@ -74,8 +76,8 @@ func main() {
 		"Path to accepted word list")
 	root.PersistentFlags().IntVar(&randomSeed, "seed", 42,
 		"Random seed")
-	root.PersistentFlags().StringVarP(&playStrategy, "strategy", "s", "naive",
-		"Play strategy. One of: naive, diversity")
+	root.PersistentFlags().StringVarP(&playStrategy, "strategy", "s", "filtering",
+		"Play strategy. One of: common, diversity, filtering, naive, selective")
 	root.PersistentFlags().BoolVarP(&debugLogging, "debug", "d", false,
 		"Enable debug logging")
 	interact := &cobra.Command{
