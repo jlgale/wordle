@@ -6,24 +6,20 @@ type Guess struct {
 	Match Match
 }
 
-func (g Guess) MustInclude() Letters {
-	must := make([]byte, 0, WordLen)
+func (g Guess) MustInclude() (must Letters, mustNot Letters) {
 	for i := 0; i < WordLen; i++ {
 		if g.Match[i] != Grey {
-			must = append(must, g.Word[i])
+			must = must.AddChar(g.Word[i])
+		} else {
+			mustNot = mustNot.AddChar(g.Word[i])
 		}
 	}
-	return NewLetters(must)
-}
-
-func (g Guess) MustNotInclude() Letters {
-	mustNot := make([]byte, 0, WordLen)
-	for i := 0; i < WordLen; i++ {
-		if g.Match[i] == Grey {
-			mustNot = append(mustNot, g.Word[i])
-		}
-	}
-	return NewLetters(mustNot)
+	// A guess with repeated letters will match Yellow only
+	// as many times as the letter appears in the final answer.
+	// So we fixup mustNot, removing any letters that we know
+	// must be present.
+	mustNot = mustNot.Remove(must)
+	return
 }
 
 func (g Guess) MustBe() (k MustBe) {

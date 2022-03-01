@@ -39,8 +39,7 @@ func NewGame(words, used []Word) Game {
 func (game Game) Guess(word Word, match Match) Game {
 	var g = Guess{word, match}
 	game.Guesses = append(game.Guesses, g)
-	var mustInclude = g.MustInclude()
-	var mustNotInclude = g.MustNotInclude()
+	var mustInclude, mustNotInclude = g.MustInclude()
 	var mustBe = g.MustBe()
 	var mustNotBe = g.MustNotBe()
 	var possibleAnswers []Word
