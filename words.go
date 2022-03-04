@@ -44,13 +44,22 @@ func (w Word) String() string {
 }
 
 func (guess Word) Match(actual Word) Match {
+	var lc = actual.LetterCounts()
 	var m Match
-	for i := 0; i < WordLen; i++ {
-		if guess[i] == actual[i] {
-			m[i] = Green
-		} else if actual.contains(guess[i]) {
+	for i, g := range guess {
+		if lc.Remove(g) {
 			m[i] = Yellow
+		}
+		if g == actual[i] {
+			m[i] = Green
 		}
 	}
 	return m
+}
+
+func (w Word) LetterCounts() (lc LetterCounts) {
+	for _, c := range w {
+		lc.Add(c)
+	}
+	return
 }
