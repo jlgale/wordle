@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jlgale/wordle"
 	"github.com/rs/zerolog"
@@ -29,7 +30,7 @@ func play(wdl *wordle.Game, strategy wordle.Strategy, word wordle.Word) {
 func main() {
 	var playStrategy string
 	var wordFilePath string
-	var randomSeed int
+	var randomSeed int64
 	var debugLogging bool
 
 	root := &cobra.Command{
@@ -52,7 +53,10 @@ func main() {
 				return err
 			}
 			log.Printf("%s: loaded %d words", wordFilePath, len(words))
-			rng = rand.New(rand.NewSource(int64(randomSeed)))
+			if randomSeed == 0 {
+				randomSeed = time.Now().UnixNano()
+			}
+			rng = rand.New(rand.NewSource(randomSeed))
 
 			switch strings.ToLower(playStrategy) {
 			case "common":
@@ -74,8 +78,7 @@ func main() {
 	}
 	root.PersistentFlags().StringVar(&wordFilePath, "words", "./words",
 		"Path to accepted word list")
-	root.PersistentFlags().IntVar(&randomSeed, "seed", 42,
-		"Random seed")
+	root.PersistentFlags().Int64Var(&randomSeed, "seed", 0, "Random seed")
 	root.PersistentFlags().StringVarP(&playStrategy, "strategy", "s", "filtering",
 		"Play strategy. One of: common, diversity, filtering, naive, selective")
 	root.PersistentFlags().BoolVarP(&debugLogging, "debug", "d", false,
