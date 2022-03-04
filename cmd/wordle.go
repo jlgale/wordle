@@ -61,7 +61,7 @@ func main() {
 			case "diversity":
 				strategy = wordle.WeightedStrategy(rng, wordle.DiversityScale())
 			case "filtering":
-				strategy = wordle.FilteringStrategy(rng, &log)
+				strategy = wordle.FilteringStrategy(rng, &log, wordle.WeightedStrategy(rng, wordle.DiversityScale()))
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng, &log)
 			case "selective":

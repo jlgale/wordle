@@ -11,44 +11,25 @@ import (
 const threshold = 60
 
 type Filtering struct {
-	rng *rand.Rand
-	log *zerolog.Logger
+	rng      *rand.Rand
+	log      *zerolog.Logger
+	fallback Strategy
 }
 
 // Select the word that filters the most from the Possible game words.
 // We can only know this based on the actual answer, so we instead
 // compute the average removed across all possible answers.
 //
-// This is expensive, so as a fallback we just pick random possible
-// answers when that number is above the threshold above. This is okay
-// since random possible words do a pretty good job of filtering when
-// there are lots of possibilities.
-func FilteringStrategy(rng *rand.Rand, log *zerolog.Logger) Filtering {
-	return Filtering{rng, log}
-}
-
-func (s *Filtering) sampleWords(words []Word, n int) []Word {
-	if len(words) <= n {
-		return append([]Word(nil), words...)
-	}
-	var samples = make([]Word, n)
-	var from = 0
-	for idx := range samples {
-		var remaining = n - idx - 1
-		var to = len(words) - remaining
-		var choice = s.rng.Intn(to - from)
-		samples[idx] = words[choice]
-		from = choice + 1
-	}
-	return samples
+// This is expensive, so as a fallback we used a another given strategy.
+func FilteringStrategy(rng *rand.Rand, log *zerolog.Logger, fallback Strategy) Filtering {
+	return Filtering{rng, log, fallback}
 }
 
 func (n Filtering) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
 	n.log.Printf("%d possible words", len(possible))
 	if len(possible) > threshold {
-		idx := n.rng.Intn(len(possible))
-		return possible[idx]
+		return n.fallback.Guess(game)
 	}
 	if len(possible) == 1 {
 		return possible[0]
@@ -79,4 +60,22 @@ func (n Filtering) Guess(game *Game) Word {
 	n.log.Printf("%s filtered and avg of %f%% of words\n",
 		choice, 1-float64(score)/float64(len(possible)*(len(possible)-1)))
 	return choice
+}
+
+// sampleWords returns an array of n words chosen randomly, without
+// replacement, from the given array.
+func (s *Filtering) sampleWords(words []Word, n int) []Word {
+	if len(words) <= n {
+		return append([]Word(nil), words...)
+	}
+	var samples = make([]Word, n)
+	var from = 0
+	for idx := range samples {
+		var remaining = n - idx - 1
+		var to = len(words) - remaining
+		var choice = s.rng.Intn(to - from)
+		samples[idx] = words[choice]
+		from = choice + 1
+	}
+	return samples
 }
