@@ -2,12 +2,19 @@ package wordle
 
 import (
 	"bufio"
+	"io"
+	"math/rand"
 	"os"
 	"strings"
+
+	"github.com/rs/zerolog"
 )
 
 // global list of words used in testing
 var words []Word = loadTestWords()
+
+// global log used in tests
+var log = zerolog.New(io.Discard)
 
 func mkw(s string) Word {
 	w, err := ParseWord(s)
@@ -53,4 +60,8 @@ func loadTestWords() (words []Word) {
 		words = append(words, w)
 	}
 	return
+}
+
+func mkRand(seed int) *rand.Rand {
+	return rand.New(rand.NewSource(int64(seed)))
 }
