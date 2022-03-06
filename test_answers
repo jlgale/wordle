@@ -1,0 +1,24 @@
+# answers for unit tests
+affix
+after
+baton
+black
+bugle
+chess
+earth
+invalid # should be discarded
+grass
+guide
+guide # duplicate
+honey
+madly
+niche
+nobly
+NOBLY # duplicate
+order
+Radar
+scrub
+snail
+stack
+weave
+wrest
