@@ -144,6 +144,20 @@ func main() {
 					break
 				}
 			}
+			switch len(game.Guesses) {
+			case 1:
+				fmt.Println("Genius")
+			case 2:
+				fmt.Println("Magnificent")
+			case 3:
+				fmt.Println("Impressive")
+			case 4:
+				fmt.Println("Splendid")
+			case 5:
+				fmt.Println("Great")
+			case 6:
+				fmt.Println("Phew")
+			}
 			return nil
 		},
 	}
