@@ -1,14 +1,10 @@
 package wordle
 
-import (
-	"github.com/rs/zerolog"
-)
-
 type Selective struct {
-	log *zerolog.Logger
+	log Logger
 }
 
-func SelectiveScale(log *zerolog.Logger) Selective {
+func SelectiveScale(log Logger) Selective {
 	return Selective{log}
 }
 

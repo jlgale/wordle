@@ -6,10 +6,6 @@ import (
 	"sort"
 )
 
-type Scale interface {
-	Weights(words []Word) []float64
-}
-
 // Weighted is a strategy to choose words randomly, weighted by
 // the score from a given scoring function.
 type Weighted struct {

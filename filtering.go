@@ -2,8 +2,6 @@ package wordle
 
 import (
 	"math/rand"
-
-	"github.com/rs/zerolog"
 )
 
 // Experimentally this setting gives a >97% win rate. Higher values
@@ -12,7 +10,7 @@ const threshold = 60
 
 type Filtering struct {
 	rng      *rand.Rand
-	log      *zerolog.Logger
+	log      Logger
 	fallback Strategy
 }
 
@@ -21,7 +19,7 @@ type Filtering struct {
 // compute the average removed across all possible answers.
 //
 // This is expensive, so as a fallback we used a another given strategy.
-func FilteringStrategy(rng *rand.Rand, log *zerolog.Logger, fallback Strategy) Filtering {
+func FilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy) Filtering {
 	return Filtering{rng, log, fallback}
 }
 

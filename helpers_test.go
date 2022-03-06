@@ -2,19 +2,21 @@ package wordle
 
 import (
 	"bufio"
-	"io"
 	"math/rand"
 	"os"
 	"strings"
-
-	"github.com/rs/zerolog"
 )
 
 // global list of words used in testing
-var words []Word = loadTestWords()
+var globalWords []Word = loadTestWords()
 
 // global log used in tests
-var log = zerolog.New(io.Discard)
+var globalLog Logger = &testLogger{}
+
+type testLogger struct{}
+
+func (*testLogger) Printf(template string, args ...interface{}) {
+}
 
 func mkw(s string) Word {
 	w, err := ParseWord(s)

@@ -112,7 +112,3 @@ func (game Game) String() string {
 	}
 	return b.String()
 }
-
-type Strategy interface {
-	Guess(w *Game) Word
-}
