@@ -77,7 +77,7 @@ func main() {
 			var mkStrategy = func(name string) (wordle.Strategy, error) {
 				switch strings.ToLower(name) {
 				case "common":
-					return scalefn(wordle.CommonScale(&log)), nil
+					return scalefn(wordle.CommonScale()), nil
 				case "diversity":
 					return scalefn(wordle.DiversityScale()), nil
 				case "naive":

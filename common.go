@@ -1,20 +1,15 @@
 package wordle
 
-import (
-	"github.com/rs/zerolog"
-)
-
 // Common is a strategy to choose words with the most common letters
 // among the possible words. The hypothesis is that this will get more
 // "yellow" squares, which is useful.
 //
 // In practice this is a losing strategy.
 type Common struct {
-	log *zerolog.Logger
 }
 
-func CommonScale(log *zerolog.Logger) Common {
-	return Common{log}
+func CommonScale() Common {
+	return Common{}
 }
 
 func (x Common) Weights(words []Word) []float64 {
