@@ -6,22 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func mkw(s string) Word {
-	w, err := ParseWord(s)
-	if err != nil {
-		panic(err)
-	}
-	return w
-}
-
-func mkm(s string) Match {
-	m, err := ParseMatch(s)
-	if err != nil {
-		panic(err)
-	}
-	return m
-}
-
 func TestParseWord(t *testing.T) {
 	_, err := ParseWord("yuk")
 	assert.Error(t, err)
