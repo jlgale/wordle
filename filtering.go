@@ -4,6 +4,9 @@ import (
 	"math/rand"
 )
 
+// When our number of possible answers is > than threshold, use a
+// fallback strategy instead.
+//
 // Experimentally this setting gives a >97% win rate. Higher values
 // don't help much an things get slow quickly. (n*n)
 const threshold = 60
@@ -18,14 +21,25 @@ type Filtering struct {
 // We can only know this based on the actual answer, so we instead
 // compute the average removed across all possible answers.
 //
-// This is expensive, so as a fallback we used a another given strategy.
+// This is expensive, so we need another strategy for the early game
+// when there are many possible answers.
+//
+// This strategy helps the endgame where most letters are known, but
+// the number of remaining possible words is higher than the number of
+// remaining guesses. For example, if we play "arbas" and match
+// "gg.gg", we have five possible words to try: "areas", "arias",
+// "arnas", "arpas" and "arras" Trying them 1 by 1, we might run out
+// of guesses. Guessing a word that can't be the answer, but that
+// tests the uncommon letters between the words, can filter out
+// possibilities more quickly. In the above case, "ferny" (where E, R
+// and N) are in 3 of the 5 possible answers, guarantees finding the
+// solution in 1 or 2 additional guesses.
 func FilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy) Filtering {
 	return Filtering{rng, log, fallback}
 }
 
 func (n Filtering) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
-	n.log.Printf("%d possible words", len(possible))
 	if len(possible) > threshold {
 		return n.fallback.Guess(game)
 	}
@@ -55,7 +69,7 @@ func (n Filtering) Guess(game *Game) Word {
 			score = remaining
 		}
 	}
-	n.log.Printf("%s filtered and avg of %f%% of words\n",
+	n.log.Printf("%s filtered an avg of %f%% of words\n",
 		choice, 1-float64(score)/float64(len(possible)*(len(possible)-1)))
 	return choice
 }

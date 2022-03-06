@@ -1,11 +1,10 @@
 package wordle
 
 type Selective struct {
-	log Logger
 }
 
-func SelectiveScale(log Logger) Selective {
-	return Selective{log}
+func SelectiveScale() Selective {
+	return Selective{}
 }
 
 func (x Selective) Weights(words []Word) []float64 {

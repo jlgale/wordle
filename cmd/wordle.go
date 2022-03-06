@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -38,69 +40,6 @@ func main() {
 		Short: "Play wordle games.",
 		Long: (`A utility for playing "wordle" games on the commandline. ` +
 			`Useful for exploring playing strategies.`),
-
-		// Setup common state
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if debugLogging {
-				log = log.Level(zerolog.DebugLevel)
-			}
-			var err error
-			words, err = readWordFile(wordFilePath, func(word string, lineno int, err error) error {
-				log.Printf("%s:%d: %s: %v\n", wordFilePath, lineno, word, err)
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-			log.Printf("%s: loaded %d words", wordFilePath, len(words))
-			if randomSeed == 0 {
-				randomSeed = time.Now().UnixNano()
-			}
-			rng = rand.New(rand.NewSource(randomSeed))
-			var scalefn func(s wordle.Scale) wordle.Strategy
-			switch strings.ToLower(scale) {
-			case "random":
-				scalefn = func(s wordle.Scale) wordle.Strategy {
-					return wordle.WeightedStrategy(rng, s, pow)
-				}
-			case "top":
-				scalefn = func(s wordle.Scale) wordle.Strategy {
-					return wordle.TopStrategy(rng, s)
-				}
-			default:
-				return fmt.Errorf("Unrecognized scale function: %s", scale)
-			}
-
-			var mkStrategy = func(name string) (wordle.Strategy, error) {
-				switch strings.ToLower(name) {
-				case "common":
-					return scalefn(wordle.CommonScale()), nil
-				case "diversity":
-					return scalefn(wordle.DiversityScale()), nil
-				case "naive":
-					return wordle.NaiveStrategy(rng, &log), nil
-				case "selective":
-					return scalefn(wordle.SelectiveScale(&log)), nil
-				default:
-					return nil, fmt.Errorf("Unrecognized fallback strategy: %s", name)
-				}
-			}
-			fallback, err := mkStrategy(fallbackStrategy)
-			if err != nil {
-				return err
-			}
-
-			switch strings.ToLower(playStrategy) {
-			case "filtering":
-				strategy = wordle.FilteringStrategy(rng, &log, fallback)
-			default:
-				strategy, err = mkStrategy(playStrategy)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
 	}
 	root.PersistentFlags().StringVar(&wordFilePath, "words", "./words",
 		"Path to accepted word list")
@@ -115,6 +54,85 @@ func main() {
 		"Scale weighted strategy by this exponent")
 	root.PersistentFlags().StringVar(&fallbackStrategy, "fallback", "diversity",
 		"Fallback strategy when a simpler strategy is needed")
+
+	// Setup common state
+	root.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if debugLogging {
+			log = log.Level(zerolog.DebugLevel)
+		}
+		var err error
+		words, err = readWordFile(wordFilePath, func(word string, lineno int, err error) error {
+			log.Printf("%s:%d: %s: %v\n", wordFilePath, lineno, word, err)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		log.Printf("%s: loaded %d words", wordFilePath, len(words))
+		if randomSeed == 0 {
+			randomSeed = time.Now().UnixNano()
+		}
+		rng = rand.New(rand.NewSource(randomSeed))
+		var scalefn func(s wordle.Scale) wordle.Strategy
+		switch strings.ToLower(scale) {
+		case "random":
+			scalefn = func(s wordle.Scale) wordle.Strategy {
+				return wordle.WeightedStrategy(rng, s, pow)
+			}
+		case "top":
+			scalefn = func(s wordle.Scale) wordle.Strategy {
+				return wordle.TopStrategy(rng, s)
+			}
+		default:
+			return fmt.Errorf("Unrecognized scale function: %s", scale)
+		}
+
+		if debugLogging {
+			// Wrap a logger around the scale function
+			innerScaleFn := scalefn
+			scalefn = func(s wordle.Scale) wordle.Strategy {
+				return innerScaleFn(&loggingScale{s, &log})
+			}
+		}
+
+		var mkStrategy = func(name string) (strategy wordle.Strategy, err error) {
+			switch strings.ToLower(name) {
+			case "common":
+				strategy = scalefn(wordle.CommonScale())
+			case "diversity":
+				strategy = scalefn(wordle.DiversityScale())
+			case "naive":
+				strategy = wordle.NaiveStrategy(rng)
+			case "selective":
+				strategy = scalefn(wordle.SelectiveScale())
+			default:
+				return nil, fmt.Errorf("Unrecognized fallback strategy: %s", name)
+			}
+			if debugLogging {
+				strategy = &loggingStrategy{strategy, &log}
+			}
+			return
+		}
+		fallback, err := mkStrategy(fallbackStrategy)
+		if err != nil {
+			return err
+		}
+
+		switch strings.ToLower(playStrategy) {
+		case "filtering":
+			strategy = wordle.FilteringStrategy(rng, &log, fallback)
+			if debugLogging {
+				strategy = &loggingStrategy{strategy, &log}
+			}
+		default:
+			strategy, err = mkStrategy(playStrategy)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	interact := &cobra.Command{
 		Use:   "interact",
 		Short: "Interactively guess a wordle answer.",
@@ -122,6 +140,7 @@ func main() {
 			game := wordle.NewGame(words, nil)
 			for !game.Over() {
 				guess := strategy.Guess(&game)
+			force:
 				fmt.Println("My guess", guess)
 				var matchString string
 				for {
@@ -131,6 +150,18 @@ func main() {
 					if strings.ToLower(matchString) == "again" {
 						game.RemoveWord(guess)
 						break
+					}
+					if strings.ToLower(matchString) == "force" {
+						fmt.Print(`give me a word to play: `)
+						var guessString string
+						fmt.Scanf("%s", &guessString)
+						var err error
+						guess, err = wordle.ParseWord(guessString)
+						if err != nil {
+							fmt.Println(err)
+							continue
+						}
+						goto force
 					}
 					match, err := wordle.ParseMatch(matchString)
 					if err != nil {
@@ -225,4 +256,45 @@ func main() {
 	play.Flags().StringVarP(&answerFilePath, "answers", "a", "", "Load answers from a file.")
 	root.AddCommand(interact, play)
 	root.Execute()
+}
+
+type loggingScale struct {
+	inner wordle.Scale
+	log   wordle.Logger
+}
+
+func (s *loggingScale) Weights(words []wordle.Word) []float64 {
+	inner := reflect.TypeOf(s.inner)
+	weights := s.inner.Weights(words)
+	index := make([]int, len(words))
+	for idx := range words {
+		index[idx] = idx
+	}
+	sort.Slice(index, func(i, j int) bool {
+		return weights[i] > weights[j]
+	})
+	if len(words) > 0 {
+		s.log.Printf("%s scored %d words [%f,%f], top:",
+			inner.Name(), len(words),
+			weights[index[len(index)-1]],
+			weights[index[0]])
+		for idx := 0; idx < 5 && idx < len(index); idx++ {
+			s.log.Printf(" %d: %f %s", idx+1, weights[index[idx]], words[index[idx]])
+		}
+	}
+	return weights
+}
+
+type loggingStrategy struct {
+	inner wordle.Strategy
+	log   wordle.Logger
+}
+
+func (s *loggingStrategy) Guess(game *wordle.Game) wordle.Word {
+	inner := reflect.TypeOf(s.inner)
+	w := s.inner.Guess(game)
+	s.log.
+		Printf("%s chose %q for guess %d, %d possible answers remaining",
+			inner.Name(), w, len(game.Guesses)+1, len(game.PossibleAnswers()))
+	return w
 }
