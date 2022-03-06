@@ -12,7 +12,7 @@ func (n Diversity) Weights(words []Word) []float64 {
 	var scores = make([]float64, len(words))
 	for idx, w := range words {
 		var letters = w.Letters().Len()
-		scores[idx] = float64(letters * letters)
+		scores[idx] = float64(letters)
 	}
 	return scores
 }

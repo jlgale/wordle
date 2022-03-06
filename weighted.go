@@ -1,6 +1,7 @@
 package wordle
 
 import (
+	"math"
 	"math/rand"
 	"sort"
 )
@@ -14,10 +15,11 @@ type Scale interface {
 type Weighted struct {
 	rng   *rand.Rand
 	scale Scale
+	pow   float64
 }
 
-func WeightedStrategy(rng *rand.Rand, scale Scale) Weighted {
-	return Weighted{rng, scale}
+func WeightedStrategy(rng *rand.Rand, scale Scale, pow float64) Weighted {
+	return Weighted{rng, scale, pow}
 }
 
 func (x Weighted) Guess(game *Game) Word {
@@ -26,7 +28,7 @@ func (x Weighted) Guess(game *Game) Word {
 	var offset = make([]float64, len(weights))
 	var total = 0.0
 	for idx, weight := range weights {
-		total += weight
+		total += math.Pow(weight, x.pow)
 		offset[idx] = total
 	}
 	var choice = x.rng.Float64() * total

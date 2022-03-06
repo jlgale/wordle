@@ -32,6 +32,9 @@ func main() {
 	var wordFilePath string
 	var randomSeed int64
 	var debugLogging bool
+	var pow float64
+	var scale string
+	var fallbackStrategy string
 
 	root := &cobra.Command{
 		Use:   "wordle",
@@ -57,21 +60,47 @@ func main() {
 				randomSeed = time.Now().UnixNano()
 			}
 			rng = rand.New(rand.NewSource(randomSeed))
+			var scalefn func(s wordle.Scale) wordle.Strategy
+			switch strings.ToLower(scale) {
+			case "random":
+				scalefn = func(s wordle.Scale) wordle.Strategy {
+					return wordle.WeightedStrategy(rng, s, pow)
+				}
+			case "top":
+				scalefn = func(s wordle.Scale) wordle.Strategy {
+					return wordle.TopStrategy(rng, s)
+				}
+			default:
+				return fmt.Errorf("Unrecognized scale function: %s", scale)
+			}
+
+			var mkStrategy = func(name string) (wordle.Strategy, error) {
+				switch strings.ToLower(name) {
+				case "common":
+					return scalefn(wordle.CommonScale(&log)), nil
+				case "diversity":
+					return scalefn(wordle.DiversityScale()), nil
+				case "naive":
+					return wordle.NaiveStrategy(rng, &log), nil
+				case "selective":
+					return scalefn(wordle.SelectiveScale(&log)), nil
+				default:
+					return nil, fmt.Errorf("Unrecognized fallback strategy: %s", name)
+				}
+			}
+			fallback, err := mkStrategy(fallbackStrategy)
+			if err != nil {
+				return err
+			}
 
 			switch strings.ToLower(playStrategy) {
-			case "common":
-				strategy = wordle.WeightedStrategy(rng,
-					wordle.CommonScale(&log))
-			case "diversity":
-				strategy = wordle.WeightedStrategy(rng, wordle.DiversityScale())
 			case "filtering":
-				strategy = wordle.FilteringStrategy(rng, &log, wordle.WeightedStrategy(rng, wordle.DiversityScale()))
-			case "naive":
-				strategy = wordle.NaiveStrategy(rng, &log)
-			case "selective":
-				strategy = wordle.WeightedStrategy(rng, wordle.SelectiveScale(&log))
+				strategy = wordle.FilteringStrategy(rng, &log, fallback)
 			default:
-				return fmt.Errorf("Unrecognized strategy: %s", playStrategy)
+				strategy, err = mkStrategy(playStrategy)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		},
@@ -83,6 +112,12 @@ func main() {
 		"Play strategy. One of: common, diversity, filtering, naive, selective")
 	root.PersistentFlags().BoolVarP(&debugLogging, "debug", "d", false,
 		"Enable debug logging")
+	root.PersistentFlags().StringVar(&scale, "scale", "random",
+		"Choose among weighted words")
+	root.PersistentFlags().Float64Var(&pow, "pow", 1.0,
+		"Scale weighted strategy by this exponent")
+	root.PersistentFlags().StringVar(&fallbackStrategy, "fallback", "diversity",
+		"Fallback strategy when a simpler strategy is needed")
 	interact := &cobra.Command{
 		Use:   "interact",
 		Short: "Interactively guess a wordle answer.",
