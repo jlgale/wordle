@@ -12,22 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	words    []wordle.Word
-	strategy wordle.Strategy
-	log      zerolog.Logger = zerolog.New(os.Stderr).Level(zerolog.InfoLevel)
-	rng      *rand.Rand
-)
-
-func play(wdl *wordle.Game, strategy wordle.Strategy, word wordle.Word) {
-	for !wdl.Over() {
-		guess := strategy.Guess(wdl)
-		match := guess.Match(word)
-		*wdl = wdl.Guess(guess, match)
+func play(game *wordle.Game, strategy wordle.Strategy, answer wordle.Word) {
+	for !game.Over() {
+		guess := strategy.Guess(game)
+		match := guess.Match(answer)
+		*game = game.Guess(guess, match)
 	}
 }
 
 func main() {
+	var words []wordle.Word
+	var strategy wordle.Strategy
+	var log zerolog.Logger = zerolog.New(os.Stderr).Level(zerolog.InfoLevel)
+	var rng *rand.Rand
 	var playStrategy string
 	var wordFilePath string
 	var randomSeed int64
