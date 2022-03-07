@@ -1,7 +1,6 @@
 package wordle
 
 import (
-	"fmt"
 	"math/bits"
 	"strings"
 )
@@ -18,9 +17,10 @@ func NewLetters(s []byte) (l Letters) {
 }
 
 func letterMask(c byte) Letters {
-	if c < 'a' || c > 'z' {
-		panic(fmt.Sprintf("bad letter: %c (%d)", c, c))
-	}
+	// This check is costly. We shouldn't have to worry about invalid letters here.
+	// if c < 'a' || c > 'z' {
+	// 	panic(fmt.Sprintf("bad letter: %c (%d)", c, c))
+	// }
 	idx := c - 'a'
 	return 1 << idx
 }

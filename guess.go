@@ -34,7 +34,7 @@ func (g Guess) MustBe() (k MustBe) {
 func (g Guess) MustNotBe() (m MustNotBe) {
 	for idx, c := range g.Word {
 		if g.Match[idx] != Green {
-			m[idx] = NewLetters([]byte{c})
+			m[idx] = letterMask(c)
 		}
 	}
 	return m
