@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"runtime"
 	"runtime/pprof"
 	"sort"
 	"strings"
@@ -173,6 +174,8 @@ func main() {
 	answersOpt := playCmd.Flags().StringP("answers", "a", "", "Load answers from a file.")
 	cpuProfileOpt := root.PersistentFlags().String("cpu-profile", "",
 		"Profile CPU usage and write the given file")
+	memProfileOpt := root.PersistentFlags().String("mem-profile", "",
+		"Profile memory usage and write the given file")
 	playCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		answers := make([]wordle.Word, len(args))
 		for idx, s := range args {
@@ -207,10 +210,10 @@ func main() {
 				if err != nil {
 					return err
 				}
+				defer f.Close()
 				pprof.StartCPUProfile(f)
 				defer pprof.StopCPUProfile()
 			}
-
 			var guesses int
 			var minGuesses int = 7
 			var maxGuesses int = 0
@@ -236,6 +239,17 @@ func main() {
 			fmt.Printf("Won %d of %d games (%0.1f%%). Guesses: avg %0.1f, min %d, max %d\n",
 				wins, games, float64(wins)/float64(games)*100, float64(guesses)/float64(games),
 				minGuesses, maxGuesses)
+			if *memProfileOpt != "" {
+				f, err := os.Create(*memProfileOpt)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				runtime.GC()
+				if err := pprof.WriteHeapProfile(f); err != nil {
+					return err
+				}
+			}
 		}
 		return nil
 	}
