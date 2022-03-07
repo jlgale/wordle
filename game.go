@@ -40,14 +40,9 @@ func (game Game) Guess(word Word, match Match) Game {
 	var g = Guess{word, match}
 	game.Guesses = append(game.Guesses, g)
 	var mustInclude, mustNotInclude = g.MustInclude()
-	var mustBe = g.MustBe()
-	var mustNotBe = g.MustNotBe()
 	var possibleAnswers []Word
 	for _, w := range game.possibleAnswers {
-		if !mustBe.Match(w) {
-			continue
-		}
-		if !mustNotBe.Match(w) {
+		if !g.GreenAllows(w) {
 			continue
 		}
 		var l = w.Letters()

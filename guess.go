@@ -7,11 +7,11 @@ type Guess struct {
 }
 
 func (g Guess) MustInclude() (must Letters, mustNot Letters) {
-	for i := 0; i < WordLen; i++ {
-		if g.Match[i] != Grey {
-			must = must.AddChar(g.Word[i])
+	for idx, c := range g.Word {
+		if g.Match[idx] != Grey {
+			must = must.AddChar(c)
 		} else {
-			mustNot = mustNot.AddChar(g.Word[i])
+			mustNot = mustNot.AddChar(c)
 		}
 	}
 	// A guess with repeated letters will match Yellow only
@@ -22,45 +22,18 @@ func (g Guess) MustInclude() (must Letters, mustNot Letters) {
 	return
 }
 
-func (g Guess) MustBe() (k MustBe) {
-	for i := 0; i < WordLen; i++ {
-		if g.Match[i] == Green {
-			k[i] = g.Word[i]
-		}
-	}
-	return k
-}
-
-func (g Guess) MustNotBe() (m MustNotBe) {
-	for idx, c := range g.Word {
-		if g.Match[idx] != Green {
-			m[idx] = c
-		}
-	}
-	return m
-}
-
-// MustBe tracks letters which are known to be in a given position in the
-// final answer.
-type MustBe [WordLen]byte
-
-func (m MustBe) Match(w Word) bool {
-	for idx, c := range w {
-		if m[idx] != 0 && m[idx] != c {
-			return false
-		}
-	}
-	return true
-}
-
-// MustNotBe tracks letters which are not in a given position in the
-// final answer.
-type MustNotBe [WordLen]byte
-
-func (m MustNotBe) Match(w Word) bool {
-	for idx, c := range w {
-		if m[idx] != 0 && m[idx] == c {
-			return false
+// Allows returns true if what we know from this Guess's Green squares
+// allows the given answer.
+func (g Guess) GreenAllows(answer Word) bool {
+	for idx, c := range answer {
+		if g.Match[idx] == Green {
+			if g.Word[idx] != c {
+				return false
+			}
+		} else {
+			if g.Word[idx] == c {
+				return false
+			}
 		}
 	}
 	return true
