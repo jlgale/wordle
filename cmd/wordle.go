@@ -44,6 +44,16 @@ func main() {
 		"Scale weighted strategy by this exponent")
 	fallbackOpt := root.PersistentFlags().String("fallback", "diversity",
 		"Fallback strategy when a simpler strategy is needed")
+	openOpt := root.PersistentFlags().StringArray("open", nil,
+		"Force an opening sequence of play")
+	// When our number of possible answers is > than threshold,
+	// use a fallback strategy instead.
+	//
+	// Experimentally the default (60) gives a >97% win rate.
+	// Higher values get slow quickly (n*n) but help for certain
+	// difficult words (ex "watch")
+	fallbackThresholdOpt := root.PersistentFlags().Int("fallback-threshold", 60,
+		"Threshold where the fallback trategy is used")
 
 	// Setup common state
 	var words []wordle.Word
@@ -114,7 +124,7 @@ func main() {
 
 		switch strings.ToLower(*strategyOpt) {
 		case "filtering":
-			strategy = wordle.FilteringStrategy(rng, &log, fallback)
+			strategy = wordle.FilteringStrategy(rng, &log, fallback, *fallbackThresholdOpt)
 			if *debugOpt {
 				strategy = &loggingStrategy{strategy, &log}
 			}

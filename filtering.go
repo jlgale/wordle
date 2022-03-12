@@ -4,17 +4,11 @@ import (
 	"math/rand"
 )
 
-// When our number of possible answers is > than threshold, use a
-// fallback strategy instead.
-//
-// Experimentally this setting gives a >97% win rate. Higher values
-// don't help much an things get slow quickly. (n*n)
-const threshold = 60
-
 type Filtering struct {
-	rng      *rand.Rand
-	log      Logger
-	fallback Strategy
+	rng       *rand.Rand
+	log       Logger
+	fallback  Strategy
+	threshold int
 }
 
 // Select the word that filters the most from the Possible game words.
@@ -34,13 +28,13 @@ type Filtering struct {
 // possibilities more quickly. In the above case, "ferny" (where E, R
 // and N) are in 3 of the 5 possible answers, guarantees finding the
 // solution in 1 or 2 additional guesses.
-func FilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy) Filtering {
-	return Filtering{rng, log, fallback}
+func FilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy, threshold int) Filtering {
+	return Filtering{rng, log, fallback, threshold}
 }
 
 func (n Filtering) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
-	if len(possible) > threshold {
+	if len(possible) > n.threshold {
 		return n.fallback.Guess(game)
 	}
 	if len(possible) == 1 {
@@ -50,7 +44,7 @@ func (n Filtering) Guess(game *Game) Word {
 	// Our candidate words to play are all possible answers plus a
 	// random sample of possible words. Among these we'll choose the
 	// one that filters the best, on average.
-	var candidates = n.sampleWords(game.words, threshold)
+	var candidates = n.sampleWords(game.words, n.threshold)
 	candidates = append(candidates, possible...)
 
 	var choice Word

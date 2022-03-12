@@ -9,7 +9,7 @@ import (
 func TestFilteringPlay(t *testing.T) {
 	rng := mkRand(1)
 	fallback := WeightedStrategy(rng, DiversityScale(), 1)
-	strategy := FilteringStrategy(rng, globalLog, fallback)
+	strategy := FilteringStrategy(rng, globalLog, fallback, 60)
 	game := NewGame(globalWords, nil)
 	answer, err := ParseWord("cigar")
 	assert.Nil(t, err)
