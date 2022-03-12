@@ -70,7 +70,7 @@ func (n Filtering) Guess(game *Game) Word {
 		}
 	}
 	n.log.Printf("%s filtered an avg of %f%% of words\n",
-		choice, 1-float64(score)/float64(len(possible)*(len(possible)-1)))
+		choice, 100.0*(1-float64(score)/float64(len(possible)*(len(possible)-1))))
 	return choice
 }
 
