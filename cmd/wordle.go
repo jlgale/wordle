@@ -75,6 +75,7 @@ func main() {
 		log.Printf("%s: loaded %d words", *wordsOpt, len(words))
 		if *seedOpt == 0 {
 			*seedOpt = time.Now().UnixNano()
+			fmt.Printf("Rolling the dice: --seed=%d\n", *seedOpt)
 		}
 		rng = rand.New(rand.NewSource(*seedOpt))
 		var scalefn func(s wordle.Scale) wordle.Strategy
