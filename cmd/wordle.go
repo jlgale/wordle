@@ -44,8 +44,8 @@ func main() {
 		"Scale weighted strategy by this exponent")
 	fallbackOpt := root.PersistentFlags().String("fallback", "diversity",
 		"Fallback strategy when a simpler strategy is needed")
-	openOpt := root.PersistentFlags().StringArray("open", nil,
-		"Force an opening sequence of play")
+	openOpt := root.PersistentFlags().StringArrayP("open", "o", nil,
+		"Force an opening sequence of guesses")
 	// When our number of possible answers is > than threshold,
 	// use a fallback strategy instead.
 	//
@@ -134,6 +134,18 @@ func main() {
 			if err != nil {
 				return err
 			}
+		}
+
+		var open []wordle.Word
+		for _, s := range *openOpt {
+			w, err := wordle.ParseWord(s)
+			if err != nil {
+				return err
+			}
+			open = append(open, w)
+		}
+		if len(open) > 0 {
+			strategy = wordle.FixedStrategy(open, strategy)
 		}
 
 		return nil
