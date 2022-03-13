@@ -8,7 +8,7 @@ type Guess struct {
 
 func (g Guess) MustInclude() (must Letters, mustNot Letters) {
 	for idx, c := range g.Word {
-		if g.Match[idx] != Grey {
+		if g.Match.Used(idx) {
 			must = must.AddChar(c)
 		} else {
 			mustNot = mustNot.AddChar(c)
@@ -25,16 +25,29 @@ func (g Guess) MustInclude() (must Letters, mustNot Letters) {
 // Allows returns true if what we know from this Guess's Green squares
 // allows the given answer.
 func (g Guess) GreenAllows(answer Word) bool {
-	for idx, c := range answer {
-		if g.Match[idx] == Green {
-			if g.Word[idx] != c {
-				return false
-			}
-		} else {
-			if g.Word[idx] == c {
-				return false
-			}
+	var match byte
+	for idx := 0; idx < WordLen; idx++ {
+		if g.Word[idx] == answer[idx] {
+			match |= 1 << idx
 		}
 	}
-	return true
+	return (g.Match.exact ^ match) == 0
+}
+
+func (g Guess) FilterPossible(words []Word) (possibleAnswers []Word) {
+	var mustInclude, mustNotInclude = g.MustInclude()
+	for _, w := range words {
+		if !g.GreenAllows(w) {
+			continue
+		}
+		var l = w.Letters()
+		if !mustInclude.Remove(l).Empty() {
+			continue
+		}
+		if !mustNotInclude.Intersect(l).Empty() {
+			continue
+		}
+		possibleAnswers = append(possibleAnswers, w)
+	}
+	return
 }

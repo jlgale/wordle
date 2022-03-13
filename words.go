@@ -47,11 +47,14 @@ func (guess Word) Match(actual Word) Match {
 	var lc = actual.LetterCounts()
 	var m Match
 	for i, g := range guess {
-		if lc.Remove(g) {
-			m[i] = Yellow
-		}
 		if g == actual[i] {
-			m[i] = Green
+			lc.Remove(g)
+			m.SetUsed(i, true)
+		}
+	}
+	for i, g := range guess {
+		if lc.Remove(g) {
+			m.SetUsed(i, false)
 		}
 	}
 	return m
