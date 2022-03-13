@@ -26,4 +26,5 @@ func TestWordMatch(t *testing.T) {
 	assert.Equal(t, mkm("ggggg"), mkw("cloth").Match(a))
 
 	assert.Equal(t, mkm("..y.."), mkw("fuzzy").Match(mkw("zilch")))
+	assert.Equal(t, mkm("....g"), mkw("eagle").Match(mkw("wince")))
 }
