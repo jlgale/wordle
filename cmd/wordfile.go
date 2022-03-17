@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
+	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/jlgale/wordle"
@@ -51,4 +54,33 @@ func readWordFile(filename string, onError func(word string, lineno int, err err
 		words = append(words, w)
 	}
 	return words, nil
+}
+
+func readWordFreqCSV(path string) (map[wordle.Word]float64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	r := csv.NewReader(f)
+	freq := make(map[wordle.Word]float64)
+	for {
+		row, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		w, err := wordle.ParseWord(row[0])
+		if err != nil {
+			continue
+		}
+		weight, err := strconv.ParseFloat(row[1], 64)
+		if err != nil {
+			return nil, err
+		}
+		freq[w] = weight
+	}
+	return freq, nil
 }

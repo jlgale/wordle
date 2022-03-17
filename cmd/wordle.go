@@ -46,6 +46,8 @@ func main() {
 		"Fallback strategy when a simpler strategy is needed")
 	openOpt := root.PersistentFlags().StringArrayP("open", "o", nil,
 		"Force an opening sequence of guesses")
+	wordFrequenciesOpt := root.PersistentFlags().String("word-frequencies", "./word_freq.csv",
+		"Word frequency scores.")
 	// When our number of possible answers is > than threshold,
 	// use a fallback strategy instead.
 	//
@@ -100,12 +102,22 @@ func main() {
 			}
 		}
 
+		var wordFrequencies map[wordle.Word]float64
 		var mkStrategy = func(name string) (strategy wordle.Strategy, err error) {
 			switch strings.ToLower(name) {
 			case "common":
 				strategy = scalefn(wordle.CommonScale())
 			case "diversity":
 				strategy = scalefn(wordle.DiversityScale())
+			case "freq":
+				if wordFrequencies == nil {
+					wordFrequencies, err = readWordFreqCSV(*wordFrequenciesOpt)
+					if err != nil {
+						return nil, err
+					}
+				}
+				// 1 is the default score for unlisted words, if any
+				strategy = scalefn(wordle.FreqScale(wordFrequencies, 1.0))
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng)
 			case "selective":
