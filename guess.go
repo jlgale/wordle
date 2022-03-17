@@ -34,17 +34,19 @@ func (g Guess) GreenAllows(answer Word) bool {
 	return (g.Match.exact ^ match) == 0
 }
 
+// Filter a given list of words to include only those that are
+// possible answers given this Guess.
 func (g Guess) FilterPossible(words []Word) (possibleAnswers []Word) {
 	var mustInclude, mustNotInclude = g.MustInclude()
 	for _, w := range words {
-		if !g.GreenAllows(w) {
-			continue
-		}
 		var l = w.Letters()
 		if !mustInclude.Remove(l).Empty() {
 			continue
 		}
 		if !mustNotInclude.Intersect(l).Empty() {
+			continue
+		}
+		if !g.GreenAllows(w) {
 			continue
 		}
 		possibleAnswers = append(possibleAnswers, w)
