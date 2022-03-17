@@ -15,6 +15,16 @@ func BenchmarkGreenAllows(b *testing.B) {
 	}
 }
 
+func BenchmarkFilterPossible(b *testing.B) {
+	var g = Guess{
+		Word:  mkw("tilde"),
+		Match: mkm("yy..g"),
+	}
+	for n := 0; n < b.N; n++ {
+		g.FilterPossible(globalWords)
+	}
+}
+
 func TestGreenAllows(t *testing.T) {
 	var g = Guess{
 		Word:  mkw("campy"),
