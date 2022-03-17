@@ -25,8 +25,11 @@ func ParseWord(s string) (w Word, err error) {
 	return
 }
 
-func (w Word) Letters() Letters {
-	return NewLetters(w[:])
+func (w Word) Letters() (l Letters) {
+	for _, c := range w {
+		l |= letterMask(c)
+	}
+	return l
 }
 
 func (w Word) contains(c byte) bool {
