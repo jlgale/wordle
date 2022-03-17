@@ -48,6 +48,8 @@ func main() {
 		"Force an opening sequence of guesses")
 	wordFrequenciesOpt := root.PersistentFlags().String("word-frequencies", "./word_freq.csv",
 		"Word frequency scores.")
+	hailmaryOpt := root.PersistentFlags().String("hail-mary", "freq",
+		"Choose a different strategy for the final guess.")
 	// When our number of possible answers is > than threshold,
 	// use a fallback strategy instead.
 	//
@@ -146,6 +148,14 @@ func main() {
 			if err != nil {
 				return err
 			}
+		}
+
+		if *hailmaryOpt != "" {
+			hailmary, err := mkStrategy(*hailmaryOpt)
+			if err != nil {
+				return err
+			}
+			strategy = wordle.NewHailMary(strategy, hailmary)
 		}
 
 		var open []wordle.Word
