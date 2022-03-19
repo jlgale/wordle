@@ -58,6 +58,9 @@ func main() {
 	// difficult words (ex "watch")
 	fallbackThresholdOpt := root.PersistentFlags().Int("fallback-threshold", 150,
 		"Threshold where the fallback strategy is used")
+	// Not clear why one would not want this, but the option is there.
+	useCacheOpt := root.PersistentFlags().Bool("use-cache", true,
+		"Use a scoring cache")
 
 	// Setup common state
 	var words []wordle.Word
@@ -94,6 +97,14 @@ func main() {
 			}
 		default:
 			return fmt.Errorf("Unrecognized scoring function: %s", *scoreOpt)
+		}
+
+		if *useCacheOpt {
+			innerScoringFn := scoringfn
+			scoringfn = func(s wordle.Scoring) wordle.Strategy {
+				cache := wordle.NewScoringCache(s, words)
+				return innerScoringFn(cache)
+			}
 		}
 
 		if *debugOpt {
