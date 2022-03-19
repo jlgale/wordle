@@ -42,7 +42,7 @@ func main() {
 		"Choose among weighted words. One of: random, top")
 	expOpt := root.PersistentFlags().Float64("exp", 1.0,
 		"Scale weighted strategy by this exponent")
-	fallbackOpt := root.PersistentFlags().String("fallback", "diversity",
+	fallbackOpt := root.PersistentFlags().String("fallback", "freq",
 		"Fallback strategy when a simpler strategy is needed")
 	openOpt := root.PersistentFlags().StringArrayP("open", "o", nil,
 		"Force an opening sequence of guesses")
