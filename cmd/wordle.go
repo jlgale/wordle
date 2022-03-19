@@ -38,7 +38,7 @@ func main() {
 		"Play strategy. One of: common, diversity, filtering, naive, selective")
 	debugOpt := root.PersistentFlags().BoolP("debug", "d", false,
 		"Enable debug logging")
-	scaleOpt := root.PersistentFlags().String("scale", "random",
+	scoreOpt := root.PersistentFlags().String("score", "random",
 		"Choose among weighted words. One of: random, top")
 	expOpt := root.PersistentFlags().Float64("exp", 1.0,
 		"Scale weighted strategy by this exponent")
@@ -82,24 +82,24 @@ func main() {
 			fmt.Printf("Rolling the dice: --seed=%d\n", *seedOpt)
 		}
 		rng = rand.New(rand.NewSource(*seedOpt))
-		var scalefn func(s wordle.Scale) wordle.Strategy
-		switch strings.ToLower(*scaleOpt) {
+		var scoringfn func(s wordle.Scoring) wordle.Strategy
+		switch strings.ToLower(*scoreOpt) {
 		case "random":
-			scalefn = func(s wordle.Scale) wordle.Strategy {
-				return wordle.WeightedStrategy(rng, s, *expOpt)
+			scoringfn = func(s wordle.Scoring) wordle.Strategy {
+				return wordle.NewWeightedStrategy(rng, s, *expOpt)
 			}
 		case "top":
-			scalefn = func(s wordle.Scale) wordle.Strategy {
-				return wordle.TopStrategy(rng, s)
+			scoringfn = func(s wordle.Scoring) wordle.Strategy {
+				return wordle.NewTop(rng, s)
 			}
 		default:
-			return fmt.Errorf("Unrecognized scale function: %s", *scaleOpt)
+			return fmt.Errorf("Unrecognized scoring function: %s", *scoreOpt)
 		}
 
 		if *debugOpt {
 			// Wrap a logger around the scale function
-			innerScaleFn := scalefn
-			scalefn = func(s wordle.Scale) wordle.Strategy {
+			innerScaleFn := scoringfn
+			scoringfn = func(s wordle.Scoring) wordle.Strategy {
 				return innerScaleFn(&loggingScale{s, &log})
 			}
 		}
@@ -108,9 +108,9 @@ func main() {
 		var mkStrategy = func(name string) (strategy wordle.Strategy, err error) {
 			switch strings.ToLower(name) {
 			case "common":
-				strategy = scalefn(wordle.CommonScale())
+				strategy = scoringfn(wordle.NewCommonLettersStrategy())
 			case "diversity":
-				strategy = scalefn(wordle.DiversityScale())
+				strategy = scoringfn(wordle.NewUniqueLettersScoring())
 			case "freq":
 				if wordFrequencies == nil {
 					wordFrequencies, err = readWordFreqCSV(*wordFrequenciesOpt)
@@ -119,11 +119,11 @@ func main() {
 					}
 				}
 				// 1 is the default score for unlisted words, if any
-				strategy = scalefn(wordle.FreqScale(wordFrequencies, 1.0))
+				strategy = scoringfn(wordle.NewFreq(wordFrequencies, 1.0))
 			case "naive":
 				strategy = wordle.NaiveStrategy(rng)
 			case "selective":
-				strategy = scalefn(wordle.SelectiveScale())
+				strategy = scoringfn(wordle.NewSelectiveScale())
 			default:
 				return nil, fmt.Errorf("Unrecognized fallback strategy: %s", name)
 			}
@@ -139,7 +139,7 @@ func main() {
 
 		switch strings.ToLower(*strategyOpt) {
 		case "filtering":
-			strategy = wordle.FilteringStrategy(rng, &log, fallback, *fallbackThresholdOpt)
+			strategy = wordle.NewFilteringStrategy(rng, &log, fallback, *fallbackThresholdOpt)
 			if *debugOpt {
 				strategy = &loggingStrategy{strategy, &log}
 			}
@@ -303,7 +303,7 @@ func main() {
 }
 
 type loggingScale struct {
-	inner wordle.Scale
+	inner wordle.Scoring
 	log   wordle.Logger
 }
 

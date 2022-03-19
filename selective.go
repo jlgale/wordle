@@ -1,13 +1,13 @@
 package wordle
 
-type Selective struct {
+type SelectiveScoring struct {
 }
 
-func SelectiveScale() Selective {
-	return Selective{}
+func NewSelectiveScale() SelectiveScoring {
+	return SelectiveScoring{}
 }
 
-func (x Selective) Weights(words []Word) []float64 {
+func (x SelectiveScoring) Weights(words []Word) []float64 {
 	// Find how often a letter is at a position in the set of possible words
 	var found [WordLen]['z' - 'a' + 1]int
 	for _, word := range words {

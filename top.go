@@ -7,17 +7,17 @@ import (
 // Top is a strategy to choose word the top words for a given score.
 // If multiple words have the same score, choose randomly among them.
 type Top struct {
-	rng   *rand.Rand
-	scale Scale
+	rng     *rand.Rand
+	scoring Scoring
 }
 
-func TopStrategy(rng *rand.Rand, scale Scale) Top {
-	return Top{rng, scale}
+func NewTop(rng *rand.Rand, scoring Scoring) *Top {
+	return &Top{rng, scoring}
 }
 
-func (x Top) Guess(game *Game) Word {
+func (x *Top) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
-	var weights = x.scale.Weights(possible)
+	var weights = x.scoring.Weights(possible)
 	var top = weights[0]
 	var topIdx = 0
 	var n = 1

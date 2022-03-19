@@ -6,21 +6,21 @@ import (
 	"sort"
 )
 
-// Weighted is a strategy to choose words randomly, weighted by
+// WeightedStrategy is a strategy to choose words randomly, weighted by
 // the score from a given scoring function.
-type Weighted struct {
-	rng   *rand.Rand
-	scale Scale
-	pow   float64
+type WeightedStrategy struct {
+	rng     *rand.Rand
+	scoring Scoring
+	pow     float64
 }
 
-func WeightedStrategy(rng *rand.Rand, scale Scale, pow float64) Weighted {
-	return Weighted{rng, scale, pow}
+func NewWeightedStrategy(rng *rand.Rand, scoring Scoring, pow float64) *WeightedStrategy {
+	return &WeightedStrategy{rng, scoring, pow}
 }
 
-func (x Weighted) Guess(game *Game) Word {
+func (x *WeightedStrategy) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
-	var weights = x.scale.Weights(possible)
+	var weights = x.scoring.Weights(possible)
 	var offset = make([]float64, len(weights))
 	var total = 0.0
 	for idx, weight := range weights {

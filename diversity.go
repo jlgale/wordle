@@ -1,14 +1,14 @@
 package wordle
 
-type Diversity struct {
+type UniqueLettersScoring struct {
 }
 
-func DiversityScale() Diversity {
-	return Diversity{}
+func NewUniqueLettersScoring() UniqueLettersScoring {
+	return UniqueLettersScoring{}
 }
 
 // Weight words based on letter diversity
-func (n Diversity) Weights(words []Word) []float64 {
+func (n UniqueLettersScoring) Weights(words []Word) []float64 {
 	var scores = make([]float64, len(words))
 	for idx, w := range words {
 		var letters = w.Letters().Len()

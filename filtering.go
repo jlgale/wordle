@@ -4,7 +4,7 @@ import (
 	"math/rand"
 )
 
-type Filtering struct {
+type FilteringStrategy struct {
 	rng       *rand.Rand
 	log       Logger
 	fallback  Strategy
@@ -28,11 +28,11 @@ type Filtering struct {
 // possibilities more quickly. In the above case, "ferny" (where E, R
 // and N) are in 3 of the 5 possible answers, guarantees finding the
 // solution in 1 or 2 additional guesses.
-func FilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy, threshold int) Filtering {
-	return Filtering{rng, log, fallback, threshold}
+func NewFilteringStrategy(rng *rand.Rand, log Logger, fallback Strategy, threshold int) *FilteringStrategy {
+	return &FilteringStrategy{rng, log, fallback, threshold}
 }
 
-func (n Filtering) Guess(game *Game) Word {
+func (n FilteringStrategy) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
 	if len(possible) > n.threshold {
 		return n.fallback.Guess(game)
@@ -48,7 +48,7 @@ func (n Filtering) Guess(game *Game) Word {
 	candidates = append(candidates, possible...)
 
 	var choice Word
-	var score = -1
+	var choiceRemaining = -1
 	for _, candidate := range candidates {
 		var remaining = 0
 		for _, answer := range possible {
@@ -58,19 +58,19 @@ func (n Filtering) Guess(game *Game) Word {
 			future := game.Guess(candidate, candidate.Match(answer))
 			remaining += len(future.PossibleAnswers())
 		}
-		if score < 0 || remaining < score {
+		if choiceRemaining < 0 || remaining < choiceRemaining {
 			choice = candidate
-			score = remaining
+			choiceRemaining = remaining
 		}
 	}
 	n.log.Printf("%s filtered an avg of %f%% of words\n",
-		choice, 100.0*(1-float64(score)/float64(len(possible)*(len(possible)-1))))
+		choice, 100.0*(1-float64(choiceRemaining)/float64(len(possible)*(len(possible)-1))))
 	return choice
 }
 
 // sampleWords returns an array of n words chosen randomly, without
 // replacement, from the given array.
-func (s *Filtering) sampleWords(words []Word, n int) []Word {
+func (s *FilteringStrategy) sampleWords(words []Word, n int) []Word {
 	if len(words) <= n {
 		return append([]Word(nil), words...)
 	}

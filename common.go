@@ -1,18 +1,18 @@
 package wordle
 
-// Common is a strategy to choose words with the most common letters
+// CommonLettersStrategy is a strategy to choose words with the most common letters
 // among the possible words. The hypothesis is that this will get more
 // "yellow" squares, which is useful.
 //
 // In practice this is a losing strategy.
-type Common struct {
+type CommonLettersStrategy struct {
 }
 
-func CommonScale() Common {
-	return Common{}
+func NewCommonLettersStrategy() CommonLettersStrategy {
+	return CommonLettersStrategy{}
 }
 
-func (x Common) Weights(words []Word) []float64 {
+func (x CommonLettersStrategy) Weights(words []Word) []float64 {
 	var used ['z' - 'a' + 1]int
 	for _, word := range words {
 		seen := NewLetters(nil)

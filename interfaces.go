@@ -5,10 +5,10 @@ type Strategy interface {
 	Guess(w *Game) Word
 }
 
-// Scale assigns a score, or "weight", to each word in the given array.
+// Scoring assigns a score, or "weight", to each word in the given array.
 // The weights can be independent or dependent on the other words in the
 // array.
-type Scale interface {
+type Scoring interface {
 	Weights(words []Word) []float64
 }
 
