@@ -53,11 +53,11 @@ func main() {
 	// When our number of possible answers is > than threshold,
 	// use a fallback strategy instead.
 	//
-	// Experimentally the default (60) gives a >97% win rate.
+	// Experimentally the default (150) gives a >99% win rate.
 	// Higher values get slow quickly (n*n) but help for certain
 	// difficult words (ex "watch")
-	fallbackThresholdOpt := root.PersistentFlags().Int("fallback-threshold", 60,
-		"Threshold where the fallback trategy is used")
+	fallbackThresholdOpt := root.PersistentFlags().Int("fallback-threshold", 150,
+		"Threshold where the fallback strategy is used")
 
 	// Setup common state
 	var words []wordle.Word
