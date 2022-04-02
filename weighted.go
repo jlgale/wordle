@@ -21,15 +21,19 @@ func NewWeightedStrategy(rng *rand.Rand, scoring Scoring, pow float64) *Weighted
 func (x *WeightedStrategy) Guess(game *Game) Word {
 	var possible = game.PossibleAnswers()
 	var weights = x.scoring.Weights(possible)
+	var idx = weightedSample(x.rng, x.pow, weights)
+	return possible[idx]
+}
+
+func weightedSample(rng *rand.Rand, pow float64, weights []float64) int {
 	var offset = make([]float64, len(weights))
 	var total = 0.0
 	for idx, weight := range weights {
-		total += math.Pow(weight, x.pow)
+		total += math.Pow(weight, pow)
 		offset[idx] = total
 	}
-	var choice = x.rng.Float64() * total
-	var idx = sort.Search(len(offset), func(i int) bool {
+	var choice = rng.Float64() * total
+	return sort.Search(len(offset), func(i int) bool {
 		return offset[i] >= choice
 	})
-	return possible[idx]
 }
