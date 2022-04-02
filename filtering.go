@@ -44,7 +44,7 @@ func (n FilteringStrategy) Guess(game *Game) Word {
 	// Our candidate words to play are all possible answers plus a
 	// random sample of possible words. Among these we'll choose the
 	// one that filters the best, on average.
-	var candidates = n.sampleWords(game.words, n.threshold)
+	var candidates = sample(n.rng, game.words, n.threshold)
 	candidates = append(candidates, possible...)
 
 	var choice Word
@@ -68,19 +68,19 @@ func (n FilteringStrategy) Guess(game *Game) Word {
 	return choice
 }
 
-// sampleWords returns an array of n words chosen randomly, without
+// sample returns an array of n words chosen randomly, without
 // replacement, from the given array.
-func (s *FilteringStrategy) sampleWords(words []Word, n int) []Word {
-	if len(words) <= n {
-		return append([]Word(nil), words...)
+func sample[T any](rng *rand.Rand, arr []T, n int) []T {
+	if len(arr) <= n {
+		return append([]T(nil), arr...)
 	}
-	var samples = make([]Word, n)
+	var samples = make([]T, n)
 	var from = 0
 	for idx := range samples {
 		var remaining = n - idx - 1
-		var to = len(words) - remaining
-		var choice = s.rng.Intn(to - from)
-		samples[idx] = words[choice]
+		var to = len(arr) - remaining
+		var choice = rng.Intn(to - from)
+		samples[idx] = arr[choice]
 		from = choice + 1
 	}
 	return samples
