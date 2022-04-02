@@ -30,25 +30,29 @@ func main() {
 		Short: "Play wordle games.",
 		Long: (`A utility for playing "wordle" games on the commandline. ` +
 			`Useful for exploring playing strategies.`),
+		CompletionOptions: cobra.CompletionOptions{
+			HiddenDefaultCmd: true,
+		},
 	}
-	wordsOpt := root.PersistentFlags().String("words", "./words",
+	rootFlags := root.PersistentFlags()
+	wordsOpt := rootFlags.String("words", "./words",
 		"Path to accepted word list")
-	seedOpt := root.PersistentFlags().Int64("seed", 0, "Random seed")
-	strategyOpt := root.PersistentFlags().StringP("strategy", "s", "filtering",
+	seedOpt := rootFlags.Int64("seed", 0, "Random seed")
+	strategyOpt := rootFlags.StringP("strategy", "s", "filtering",
 		"Play strategy. One of: common, diversity, filtering, naive, selective")
-	debugOpt := root.PersistentFlags().BoolP("debug", "d", false,
+	debugOpt := rootFlags.BoolP("debug", "d", false,
 		"Enable debug logging")
-	scoreOpt := root.PersistentFlags().String("score", "random",
+	scoreOpt := rootFlags.String("score", "random",
 		"Choose among weighted words. One of: random, top")
-	expOpt := root.PersistentFlags().Float64("exp", 1.0,
+	expOpt := rootFlags.Float64("exp", 1.0,
 		"Scale weighted strategy by this exponent")
-	fallbackOpt := root.PersistentFlags().String("fallback", "freq",
+	fallbackOpt := rootFlags.String("fallback", "freq",
 		"Fallback strategy when a simpler strategy is needed")
-	openOpt := root.PersistentFlags().StringArrayP("open", "o", nil,
+	openOpt := rootFlags.StringArrayP("open", "o", nil,
 		"Force an opening sequence of guesses")
-	wordFrequenciesOpt := root.PersistentFlags().String("word-frequencies", "./word_freq.csv",
+	wordFrequenciesOpt := rootFlags.String("word-frequencies", "./word_freq.csv",
 		"Word frequency scores.")
-	hailmaryOpt := root.PersistentFlags().String("hail-mary", "freq",
+	hailmaryOpt := rootFlags.String("hail-mary", "freq",
 		"Choose a different strategy for the final guess.")
 	// When our number of possible answers is > than threshold,
 	// use a fallback strategy instead.
@@ -56,11 +60,18 @@ func main() {
 	// Experimentally the default (150) gives a >99% win rate.
 	// Higher values get slow quickly (n*n) but help for certain
 	// difficult words (ex "watch")
-	fallbackThresholdOpt := root.PersistentFlags().Int("fallback-threshold", 150,
+	fallbackThresholdOpt := rootFlags.Int("fallback-threshold", 150,
 		"Threshold where the fallback strategy is used")
-	// Not clear why one would not want this, but the option is there.
-	useCacheOpt := root.PersistentFlags().Bool("use-cache", true,
-		"Use a scoring cache")
+
+	// Hidden, debug type options
+	useCacheOpt := rootFlags.Bool("use-cache", true, "Use a scoring cache")
+	cpuProfileOpt := rootFlags.String("cpu-profile", "",
+		"Profile CPU usage and write the given file")
+	memProfileOpt := rootFlags.String("mem-profile", "",
+		"Profile memory usage and write the given file")
+	rootFlags.MarkHidden("use-cache")
+	rootFlags.MarkHidden("cpu-profile")
+	rootFlags.MarkHidden("mem-profile")
 
 	// Setup common state
 	var words []wordle.Word
@@ -225,13 +236,9 @@ func main() {
 		return nil
 	}
 
-	playCmd := &cobra.Command{Use: "play", Short: "Play automatically."}
-	repeatOpt := playCmd.Flags().IntP("repeat", "n", 0, "Play multiple games.")
+	playCmd := &cobra.Command{Use: "play", Short: "Play automatically with the given answer."}
+	repeatOpt := playCmd.Flags().IntP("repeat", "n", 0, "Play multiple games per answer.")
 	answersOpt := playCmd.Flags().StringP("answers", "a", "", "Load answers from a file.")
-	cpuProfileOpt := root.PersistentFlags().String("cpu-profile", "",
-		"Profile CPU usage and write the given file")
-	memProfileOpt := root.PersistentFlags().String("mem-profile", "",
-		"Profile memory usage and write the given file")
 	playCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		answers := make([]wordle.Word, len(args))
 		for idx, s := range args {
