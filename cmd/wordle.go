@@ -161,7 +161,9 @@ func main() {
 
 		switch strings.ToLower(*strategyOpt) {
 		case "filtering":
-			strategy = wordle.NewFilteringStrategy(rng, &log, fallback, *fallbackThresholdOpt)
+			strategy = wordle.NewFilteringStrategy(rng, &log, fallback, *fallbackThresholdOpt,
+				wordle.NewFreq(wordFrequencies, 1.0),
+			)
 			if *debugOpt {
 				strategy = &loggingStrategy{strategy, &log}
 			}
